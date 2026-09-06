@@ -1,6 +1,9 @@
 name: Mirror Kiali Image
 on:
   workflow_dispatch:
+permissions:
+  packages: write
+  contents: read
 jobs:
   mirror:
     runs-on: ubuntu-latest
