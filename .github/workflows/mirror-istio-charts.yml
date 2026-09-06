@@ -1,0 +1,28 @@
+name: Mirror Istio Charts
+on:
+  workflow_dispatch:
+permissions:
+  packages: write
+  contents: read
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+      - name: Add istio helm repo
+        run: helm repo add istio https://istio-release.storage.googleapis.com/charts
+      - name: Update helm repo
+        run: helm repo update
+      - name: Pull base chart
+        run: helm pull istio/base --version 1.27.0
+      - name: Pull istiod chart
+        run: helm pull istio/istiod --version 1.27.0
+      - name: Login to GHCR
+        run: echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Push base chart
+        run: helm push base-1.27.0.tgz oci://ghcr.io/${{ env.OWNER_LC }}/charts
+      - name: Push istiod chart
+        run: helm push istiod-1.27.0.tgz oci://ghcr.io/${{ env.OWNER_LC }}/charts
